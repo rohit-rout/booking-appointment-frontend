@@ -27,6 +27,7 @@ export default function CalendarViewWrapper() {
         </h2>
 
         <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+          {/* left Panel */}
           <div className="w-full md:w-1/4 bg-zinc-800 rounded-xl p-4 shadow-inner text-sm space-y-4">
             <div className="flex items-start gap-2">
               <span className="text-xl">📅</span>
@@ -53,13 +54,14 @@ export default function CalendarViewWrapper() {
             </div>
           </div>
 
+          {/* middle Panel */}
           <div className="w-full md:w-1/3">
             <Calender
               defaultValue={selectedDate}
               changeHandler={setSelectedDate}
             />
           </div>
-
+          {/* right Panel */}
           <div className="w-full md:w-1/3">
             <TimeSlotList date={selectedDate} timezone={selectedTimezone} />
           </div>
