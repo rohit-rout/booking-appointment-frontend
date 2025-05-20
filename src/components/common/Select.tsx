@@ -26,7 +26,7 @@ export const CustomSelect = ({
   return (
     <div className="w-full flex justify-center">
       <Select
-        className="react-select-container"
+        className="react-select-container min-w-[400px]"
         classNamePrefix="react-select"
         defaultValue={defaultValue}
         onChange={changeHandler}
