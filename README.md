@@ -28,20 +28,16 @@ A modern web-based appointment booking interface built with **React**, **TypeScr
 
 ## 📦 Installation
 
-````bash
+```bash
 git clone https://github.com/rohit-rout/booking-appointment-frontend.git
 cd booking-appointment-frontend
 npm install
 
 
-## ▶️ Running the App
-
-```bash
-npm run dev
-By default, the app runs on http://localhost:3000.
 
 
-##📁 Folder Structure
+📁 Folder Structure
+
 src/
 │
 ├── components/
@@ -54,8 +50,7 @@ src/
 ├── App.tsx
 └── main.tsx
 
-
-##🧹 TODOs / Improvements
+🧹 TODOs / Improvements
  Validation for overlapping or invalid time slots
 
  Backend error feedback in UI
@@ -63,4 +58,4 @@ src/
  Loading states and skeletons
 
  User authentication (if planned)
-````
+```
