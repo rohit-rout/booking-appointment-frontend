@@ -1,9 +1,23 @@
 "use client";
 import { createContext, useContext, useState } from "react";
 
+interface SlotTiming {
+  timezone: {
+    value: string;
+    label: string;
+    offset: number;
+    abbrev: string;
+    altName: string;
+  } | null;
+  time: string | null;
+  date: string | null;
+}
+
 interface ModalContextProps {
   showModal: boolean;
   setShowModal: (value: boolean) => void;
+  slotTiming: SlotTiming;
+  setSlotTiming: (details: SlotTiming) => void;
 }
 
 const SlotModalContext = createContext<ModalContextProps | undefined>(
@@ -16,8 +30,15 @@ export const SlotModalProvider = ({
   children: React.ReactNode;
 }) => {
   const [showModal, setShowModal] = useState(false);
+  const [slotTiming, setSlotTiming] = useState<SlotTiming>({
+    timezone: null,
+    time: null,
+    date: null,
+  });
   return (
-    <SlotModalContext.Provider value={{ showModal, setShowModal }}>
+    <SlotModalContext.Provider
+      value={{ showModal, setShowModal, slotTiming, setSlotTiming }}
+    >
       {children}
     </SlotModalContext.Provider>
   );

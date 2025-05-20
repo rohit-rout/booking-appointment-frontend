@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { useSlotModal } from "@/providers/SlotBookProvider";
 import {
   Box,
   Button,
   Checkbox,
+  CircularProgress,
   FormControlLabel,
   Modal,
   TextField,
@@ -14,6 +15,15 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/material.css";
+import { postData } from "@/lib/service/fetcher";
+import dayjs from "dayjs";
+import timezonePlugin from "dayjs/plugin/timezone";
+import utc from "dayjs/plugin/utc";
+import { useQueryClient } from "@tanstack/react-query";
+import { formatDate } from "@/lib/utils/helper";
+
+dayjs.extend(utc);
+dayjs.extend(timezonePlugin);
 
 const schema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -29,46 +39,86 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 const SlotBookModal = () => {
-  const { showModal, setShowModal } = useSlotModal();
-
-  const [formValues, setFormValues] = useState<FormData>({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    additionalInfo: "",
-    consent: false,
-  });
+  const { showModal, slotTiming, setShowModal, setSlotTiming } = useSlotModal();
+  const queryClient = useQueryClient();
 
   const {
     register,
     handleSubmit,
     control,
-    formState: { errors },
+    formState: { errors, isValid, isSubmitting },
     reset,
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: formValues,
+    mode: "onChange",
+    defaultValues: {
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      additionalInfo: "",
+      consent: false,
+    },
   });
 
-  const onSubmit: SubmitHandler<FormData> = (data) => {
-    console.log("Meeting Scheduled:", data);
-    console.log("Form Values:", formValues);
-    setFormValues(data);
+  const onSubmit: SubmitHandler<FormData> = async (data) => {
+    if (!slotTiming?.date || !slotTiming?.time || !slotTiming?.timezone) {
+      return;
+    }
+
+    const requestBody = {
+      date: slotTiming.date,
+      time: slotTiming.time,
+      timezone: slotTiming.timezone.value,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      email: data.email,
+      phone: data.phone,
+    };
+
+    try {
+      const res = await postData(
+        "http://localhost:8080/api/slots",
+        requestBody
+      );
+
+      await new Promise((resolve) =>
+        setTimeout(() => {
+          resolve(true);
+        }, 1000)
+      );
+
+      queryClient.invalidateQueries({ queryKey: ["slots"] });
+
+      if (!res.success) {
+        console.error("Failed to schedule slot:", res.message || res);
+        return;
+      }
+
+      reset();
+      setShowModal(false);
+      setSlotTiming({ timezone: null, time: null, date: null });
+    } catch (error) {
+      console.error("Error scheduling meeting:", error);
+    }
+  };
+
+  const closeModal = () => {
     setShowModal(false);
-    reset();
+    setSlotTiming({ timezone: null, time: null, date: null });
   };
 
   return (
-    <Modal open={showModal} onClose={() => setShowModal(false)}>
+    <Modal open={showModal} onClose={closeModal}>
       <Box
         sx={{
-          width: "80%",
-          maxWidth: 900,
+          width: "90%",
+          maxWidth: 960,
           margin: "5% auto",
-          backgroundColor: "#121212",
+          backgroundColor: "#181818",
           color: "white",
-          borderRadius: 2,
+          borderRadius: 4,
+          boxShadow: 24,
           display: "flex",
           overflow: "hidden",
         }}
@@ -78,20 +128,31 @@ const SlotBookModal = () => {
             flex: 1,
             p: 4,
             borderRight: "1px solid #333",
+            background: "linear-gradient(135deg, #1e1e1e, #111)",
+            color: "white",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
-            backgroundColor: "#1e1e1e",
+            gap: 2,
+            borderTopLeftRadius: 8,
+            borderBottomLeftRadius: 8,
           }}
         >
-          <Typography variant="h6" gutterBottom>
-            test
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+            📌 Meeting Details
           </Typography>
-          <Typography variant="body1">🕒 30 Mins</Typography>
           <Typography variant="body1">
-            📅 08:30 AM - 09:00 AM , Fri, Jun 13, 2025
+            🕒 Duration: <strong>30 Mins</strong>
           </Typography>
-          <Typography variant="body1">🌍 America/New_York (EDT)</Typography>
+          <Typography variant="body1">
+            📅 Date:{" "}
+            <strong>
+              {formatDate(slotTiming.date ?? "", slotTiming.time ?? "", 30)}
+            </strong>
+          </Typography>
+          <Typography variant="body1">
+            🌍 Timezone: <strong>{slotTiming?.timezone?.label || "N/A"}</strong>
+          </Typography>
         </Box>
 
         <Box sx={{ flex: 2, p: 4 }}>
@@ -108,12 +169,6 @@ const SlotBookModal = () => {
                 error={!!errors.firstName}
                 helperText={errors.firstName?.message}
                 variant="outlined"
-                onChange={(e) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    firstName: e.target.value,
-                  }))
-                }
               />
               <TextField
                 fullWidth
@@ -123,12 +178,6 @@ const SlotBookModal = () => {
                 autoComplete="off"
                 helperText={errors.lastName?.message}
                 variant="outlined"
-                onChange={(e) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    lastName: e.target.value,
-                  }))
-                }
               />
             </Box>
 
@@ -150,11 +199,8 @@ const SlotBookModal = () => {
                         required: true,
                         autoComplete: "off",
                       }}
-                      {...field}
-                      onChange={(value) => {
-                        field.onChange(value);
-                        setFormValues((prev) => ({ ...prev, phone: value }));
-                      }}
+                      value={field.value}
+                      onChange={(value) => field.onChange(value)}
                     />
                     {errors.phone && (
                       <Typography variant="caption" color="error">
@@ -172,12 +218,6 @@ const SlotBookModal = () => {
                 helperText={errors.email?.message}
                 autoComplete="off"
                 variant="outlined"
-                onChange={(e) =>
-                  setFormValues((prev) => ({
-                    ...prev,
-                    email: e.target.value,
-                  }))
-                }
               />
             </Box>
 
@@ -189,12 +229,6 @@ const SlotBookModal = () => {
               {...register("additionalInfo")}
               variant="outlined"
               sx={{ mb: 2 }}
-              onChange={(e) =>
-                setFormValues((prev) => ({
-                  ...prev,
-                  additionalInfo: e.target.value,
-                }))
-              }
             />
 
             <FormControlLabel
@@ -206,13 +240,7 @@ const SlotBookModal = () => {
                     <Checkbox
                       {...field}
                       checked={field.value}
-                      onChange={(e) => {
-                        field.onChange(e.target.checked);
-                        setFormValues((prev) => ({
-                          ...prev,
-                          consent: e.target.checked,
-                        }));
-                      }}
+                      onChange={(e) => field.onChange(e.target.checked)}
                     />
                   )}
                 />
@@ -231,8 +259,18 @@ const SlotBookModal = () => {
             )}
 
             <Box mt={3} display="flex" justifyContent="flex-end">
-              <Button type="submit" variant="contained" color="primary">
-                Schedule Meeting
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                disabled={!isValid || isSubmitting}
+                startIcon={
+                  isSubmitting ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : null
+                }
+              >
+                {isSubmitting ? "Scheduling..." : "Schedule Meeting"}
               </Button>
             </Box>
           </form>

@@ -2,6 +2,7 @@
 import React from "react";
 import Select from "react-select";
 import { useTimezoneSelect, allTimezones } from "react-timezone-select";
+
 const labelStyle = "original";
 const timezones = {
   ...allTimezones,
@@ -14,8 +15,8 @@ type CustomSelectProps = {
 };
 
 export const CustomSelect = ({
-  defaultValue,
   changeHandler,
+  defaultValue,
 }: CustomSelectProps) => {
   const { options } = useTimezoneSelect({
     labelStyle,
@@ -23,12 +24,19 @@ export const CustomSelect = ({
   });
 
   return (
-    <div className="App">
+    <div className="w-full flex justify-center">
       <Select
-        className="!min-w-[300px]"
+        className="react-select-container"
+        classNamePrefix="react-select"
         defaultValue={defaultValue}
         onChange={changeHandler}
         options={options}
+        getOptionLabel={(e) => e.label}
+        menuPortalTarget={typeof window !== "undefined" ? document.body : null}
+        styles={{
+          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+        }}
+        menuPlacement="top"
       />
     </div>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./styles/globals.css";
 import { SlotModalProvider } from "@/providers/SlotBookProvider";
+import ReactQueryProvider from "@/providers/ReactQueryProvider";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -14,9 +15,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <SlotModalProvider>
-        <body>{children}</body>
-      </SlotModalProvider>
+      <ReactQueryProvider>
+        <SlotModalProvider>
+          <body>{children}</body>
+        </SlotModalProvider>
+      </ReactQueryProvider>
     </html>
   );
 }

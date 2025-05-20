@@ -1,65 +1,64 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import TimeSlotButton from "./TimeSlotButton";
 import { fetchSlots } from "@/lib/api/slotApi";
 import { Dayjs } from "dayjs";
 import { useSlotModal } from "@/providers/SlotBookProvider";
-
-// const slots = [
-//   "08:00 AM",
-//   "08:30 AM",
-//   "09:00 AM",
-//   "09:30 AM",
-//   "10:00 AM",
-//   "10:30 AM",
-//   "11:00 AM",
-//   "11:30 AM",
-// ];
+import { TimeZoneT } from "@/lib/interfaces/timezone";
 
 type TimeSlotProps = {
-  date: Dayjs | null;
-  timezone: {
-    value: string;
-    label: string;
-    offset: number;
-    abbrev: string;
-    altName: string;
-  };
+  date: Dayjs;
+  timezone: TimeZoneT;
 };
 
 export default function TimeSlotList({ date, timezone }: TimeSlotProps) {
-  const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
-  const [slots, setSlots] = useState<string[]>([]);
-  const { setShowModal } = useSlotModal();
+  const { setShowModal, setSlotTiming } = useSlotModal();
 
-  const getSlots = useCallback(async (date: string, timezone: string) => {
-    const slotsData = await fetchSlots(date, timezone);
-    setSlots(slotsData.slot);
-  }, []);
+  const formattedDate = date.format("YYYY-MM-DD");
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["slots", formattedDate, timezone.value],
+    queryFn: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      return fetchSlots(formattedDate, timezone.value);
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleSlotSelect = (slot: string) => {
-    console.log("rendering slots", slot);
-    if (selectedSlot) {
-      setShowModal(true);
-    }
-    setSelectedSlot(slot);
+    setSlotTiming({
+      timezone,
+      time: slot,
+      date: formattedDate,
+    });
+    setShowModal(true);
   };
 
-  useEffect(() => {
-    getSlots(date?.format("YYYY-MM-DD") || "", timezone.value);
-  }, [date, timezone, getSlots]);
+  const slots = data?.slot || [];
 
   return (
-    <div className="flex flex-col items-center max-h-96 overflow-y-scroll no-scrollbar">
-      {slots.map((slot) => (
-        <TimeSlotButton
-          key={slot}
-          time={slot}
-          selected={slot === selectedSlot}
-          onClick={() => handleSlotSelect(slot)}
-        />
-      ))}
+    <div className="w-[220px] sm:w-[260px] md:w-[300px] max-h-96 overflow-y-auto bg-zinc-800 p-4 rounded-xl shadow-lg flex flex-col gap-3 no-scrollbar">
+      {isLoading ? (
+        <div className="text-white text-sm text-center animate-pulse">
+          Loading slots...
+        </div>
+      ) : isError ? (
+        <div className="text-red-500 text-sm text-center">
+          Failed to load slots.
+        </div>
+      ) : slots.length === 0 ? (
+        <div className="text-white text-sm text-center">No slots available</div>
+      ) : (
+        slots.map((slot: string) => (
+          <TimeSlotButton
+            key={slot}
+            time={slot}
+            onClick={() => handleSlotSelect(slot)}
+          />
+        ))
+      )}
     </div>
   );
 }
