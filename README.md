@@ -26,23 +26,13 @@ A modern web-based appointment booking interface built with **React**, **TypeScr
 
 ---
 
-## 📦 Installation
-
-```bash
-git clone https://github.com/rohit-rout/booking-appointment-frontend.git
-cd booking-appointment-frontend
-npm install
-
-
-
-
-📁 Folder Structure
+## 🚀 Folder Structure
 
 src/
 │
 ├── components/
-│   ├── CalendarViewWrapper.tsx
-│   └── SlotBookModal.tsx
+│ ├── CalendarViewWrapper.tsx
+│ └── SlotBookModal.tsx
 │
 ├── hooks/
 ├── utils/
@@ -50,12 +40,20 @@ src/
 ├── App.tsx
 └── main.tsx
 
-🧹 TODOs / Improvements
- Validation for overlapping or invalid time slots
+## 🚀 Todos
 
- Backend error feedback in UI
+Validation for overlapping or invalid time slots
+Backend error feedback in UI
+Loading states and skeletons
+User authentication (if planned)
 
- Loading states and skeletons
+## 📦 Installation
 
- User authentication (if planned)
+```bash
+git clone https://github.com/rohit-rout/booking-appointment-frontend.git
+cd booking-appointment-frontend
+npm install
+----
+
+
 ```
