@@ -26,27 +26,6 @@ A modern web-based appointment booking interface built with **React**, **TypeScr
 
 ---
 
-## 🚀 Folder Structure
-
-src/
-│
-├── components/
-│ ├── CalendarViewWrapper.tsx
-│ └── SlotBookModal.tsx
-│
-├── hooks/
-├── utils/
-├── services/
-├── App.tsx
-└── main.tsx
-
-## 🚀 Todos
-
-Validation for overlapping or invalid time slots
-Backend error feedback in UI
-Loading states and skeletons
-User authentication (if planned)
-
 ## 📦 Installation
 
 ```bash
